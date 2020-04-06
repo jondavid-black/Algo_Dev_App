@@ -1,0 +1,183 @@
+plugins {
+    id 'java'
+
+    // Apply the application plugin to add support for building an application
+    id 'application'
+    
+    // Apply the jacoco plugin for code coverage analysis
+    id 'jacoco'
+}
+
+dependencies {
+    testCompile "org.mockito:mockito-core:1.+"
+    testImplementation('org.junit.jupiter:junit-jupiter:5.6.1')
+}
+
+repositories {
+    jcenter() 
+}
+
+sourceSets {
+    main {
+         java {
+            srcDirs = ['src/main/java']
+         }
+    }
+
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
+
+// Define the main class for the application
+mainClassName = 'Simulation'
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
+jacoco {
+    reportsDir = file("${buildDir}/reports/jacoco")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.enabled true
+        html.destination file("${buildDir}/reports/jacocoHtml")
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude:  [
+                    'org/devopsfordefense/linerunner/Simulation.*'
+            ])
+        })
+    }
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+
+            failOnViolation true
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.devopsfordefense.linerunner.Simulation'
+    }
+}
+
+task dockerBuildScenarioOne(type:Exec) {
+  
+    // set working dir to project root (i.e. current directory) [TODO this may not be robust]
+    workingDir '.'  
+    
+    // craete the GAV for tagging the image layer
+    def gav = group_id + '/' + artifact_id + "-one" + ':' + sem_ver
+    
+    // create the build-arg for docker
+    def build_arg = 'SCENARIO=' + scenario_one_image
+    
+    // run the docker build command
+    executable 'docker'
+    args = ['build', '--build-arg', build_arg, '-t', gav, '.']
+    
+}
+
+task dockerTagForPublishScenarioOne(type:Exec) {
+
+    // docker tag <initial_tag> <yourhubusername/artifact:version>
+    def gav = group_id + '/' + artifact_id + '-one:' + sem_ver
+
+    def tgt = 'blackjd/' + artifact_id + '-one:' + sem_ver
+
+    executable 'docker'
+    args = ['tag', gav, tgt]
+
+}
+
+task dockerPushScenarioOne(type:Exec) {
+
+    // docker push <yourhubusername/artifact:version>
+    def tgt = 'blackjd/' + artifact_id + '-one:' + sem_ver
+
+    executable 'docker'
+    args = ['push', tgt]
+
+}
+
+task dockerPublishScenarioOne {
+    dependsOn dockerTagForPublishScenarioOne
+    dependsOn dockerPushScenarioOne
+}
+
+task dockerBuildScenarioTwo(type:Exec) {
+  
+    // set working dir to project root (i.e. current directory) [TODO this may not be robust]
+    workingDir '.'  
+    
+    // craete the GAV for tagging the image layer
+    def gav = group_id + '/' + artifact_id + "-two" + ':' + sem_ver
+
+    // create the build-arg for docker
+    def build_arg = 'SCENARIO=' + scenario_two_image
+
+    // run the docker build command
+    executable 'docker'
+    args = ['build', '--build-arg', build_arg, '-t', gav, '.']
+    
+}
+
+task dockerTagForPublishScenarioTwo(type:Exec) {
+
+    // docker tag <initial_tag> <yourhubusername/artifact:version>
+    def gav = group_id + '/' + artifact_id + '-two:' + sem_ver
+
+    def tgt = 'blackjd/' + artifact_id + '-two:' + sem_ver
+
+    executable 'docker'
+    args = ['tag', gav, tgt]
+
+}
+
+task dockerPushScenarioTwo(type:Exec) {
+
+    // docker push <yourhubusername/artifact:version>
+    def tgt = 'blackjd/' + artifact_id + '-two:' + sem_ver
+
+    executable 'docker'
+    args = ['push', tgt]
+
+}
+
+task dockerPublishScenarioTwo {
+    dependsOn dockerTagForPublishScenarioTwo
+    dependsOn dockerPushScenarioTwo
+}
+
+task dockerBuildAll {
+    dependsOn dockerBuildScenarioOne
+    dependsOn dockerBuildScenarioTwo
+}
+
+task dockerAll {
+    dependsOn dockerBuildAll
+    dependsOn dockerPublishScenarioOne
+    dependsOn dockerPublishScenarioTwo
+}
+
+dockerBuildScenarioOne.dependsOn jar
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
+check.dependsOn jacocoTestCoverageVerification
