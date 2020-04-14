@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: linerunner-scenario1
+spec:
+  ttlSecondsAfterFinished: 5
+  template:
+    spec:
+      volumes:
+      - name: output-storage
+        persistentVolumeClaim:
+          claimName: output-claim
+      containers:
+      - name: linerunner-scenraio1
+        image: blackjd/algodevapp-one:1.0.2
+        volumeMounts:
+          - name: output-storage
+            mountPath: /usr/output
+      restartPolicy: Never
+  backoffLimit: 2

@@ -2,10 +2,14 @@ package org.devopsfordefense.linerunner;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -13,7 +17,7 @@ public class Simulation {
 
     private final String dataFile;
     private final String outFile;
-    private final Map<Double, Double> simData; 
+    private final Map<Double, Double> simData;
 
     public Simulation(final String dataFilePath, final String outputFilePath) {
         dataFile = dataFilePath;
@@ -58,7 +62,8 @@ public class Simulation {
         PrintStream log = null;
 
         try {
-            final File logFile = new File(outFile + "/output.txt");
+            String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss").format(new Date());
+            final File logFile = new File(outFile + "/output_" + timeStamp + ".txt");
             System.out.println("Created output file: " + logFile.getAbsolutePath());
             log = new PrintStream(logFile);
         } catch (final Exception e) {
@@ -71,9 +76,16 @@ public class Simulation {
             final double t = data.getKey();
             final double a = data.getValue();
 
+            System.out.println("Running Simulation Step: t=" + t + " a=" + a);
             runner.step(t, a);
 
-            log.println(runner.getTimeSec() + ", " + runner.getPosition() + ", " + runner.getVelocity());
+            log.println(
+                    "Step result: " + runner.getTimeSec() + ", " + runner.getPosition() + ", " + runner.getVelocity());
+            try {
+            Thread.sleep(1000);
+            } catch (Exception exception) {
+            // ignore
+            }
 
         }
 
@@ -88,19 +100,36 @@ public class Simulation {
 
         System.out.println("Running LineRunner Simulation");
 
-        if (args.length != 2) {
+        if (args.length != 1) {
             throw new RuntimeException(
-                    "Invalid arguments. args.length=" + args.length + " args[0]=" + args[0] + " args[1]=" + args[1]);
+                    "Invalid arguments. Should have 1 config properties file arg. args.length=" + args.length);
         }
 
-        final File in = new File(args[0]);
+        final File configFile = new File(args[0]);
+        if (!configFile.exists() || !configFile.isFile()) {
+            throw new RuntimeException("Arg 1 isn't a file. [" + args[0] + "]");
+        }
+
+        // read configuration
+        Properties config = new Properties();
+        try {
+            config.load(new FileReader(configFile));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Configuration File not found.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't read configuration file.", e);
+        }
+
+        final File in = new File(config.getProperty("scenario-data"));
         if (!in.exists() || !in.isFile()) {
-            throw new RuntimeException("Arg 1 isn't a file.");
+            throw new RuntimeException("scenario-data config value isn't a file. [" + config.getProperty("scenario-data") + "]");
         }
 
-        final File out = new File(args[1]);
+        final File out = new File(config.getProperty("output-dir"));
         if (!out.exists() || !out.isDirectory()) {
-            throw new RuntimeException("Arg 2 isn't a directory.");
+            if (!out.mkdir()) {
+                throw new RuntimeException("output-dir config value isn't a directory and couldn't be created [" + config.getProperty("output-dir") + "].");
+            }   
         }
 
         // read inputs
