@@ -1,0 +1,8 @@
+ARG scenario
+FROM blackjd/scenario.two:${scenario}
+COPY ./build/libs /usr/app/AlgoDev
+COPY ./build/resources/main/scenario2.prop /usr/data/config.prop
+RUN mkdir /usr/output
+VOLUME ["/usr/output"]
+WORKDIR /usr/app/AlgoDev
+CMD ["java", "-jar", "SimulationApp.jar", "/usr/data/config.prop"] 

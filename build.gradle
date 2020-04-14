@@ -87,12 +87,12 @@ task dockerBuildScenarioOne(type:Exec) {
     // craete the GAV for tagging the image layer
     def gav = group_id + '/' + artifact_id + "-one" + ':' + sem_ver
     
-    // create the build-arg for docker
-    def build_arg = 'SCENARIO=' + scenario_one_image
+    // create the build-args for docker
+    def scenario = 'scenario=' + scenario_one_version
     
     // run the docker build command
     executable 'docker'
-    args = ['build', '--build-arg', build_arg, '-t', gav, '.']
+    args = ['build', '--build-arg', scenario, '-t', gav, '-f', 'Dockerfile_sc1', '.']
     
 }
 
@@ -132,11 +132,11 @@ task dockerBuildScenarioTwo(type:Exec) {
     def gav = group_id + '/' + artifact_id + "-two" + ':' + sem_ver
 
     // create the build-arg for docker
-    def build_arg = 'SCENARIO=' + scenario_two_image
+    def scenario = 'scenario=' + scenario_two_version
 
     // run the docker build command
     executable 'docker'
-    args = ['build', '--build-arg', build_arg, '-t', gav, '.']
+    args = ['build', '--build-arg', scenario, '-t', gav, '-f', 'Dockerfile_sc2', '.']
     
 }
 

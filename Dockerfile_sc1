@@ -1,6 +1,7 @@
-ARG SCENARIO
-FROM $SCENARIO
+ARG scenario
+FROM blackjd/scenario.one:${scenario}
 COPY ./build/libs /usr/app/AlgoDev
+COPY ./build/resources/main/scenario1.prop /usr/data/config.prop
 RUN mkdir /usr/output
 VOLUME ["/usr/output"]
 WORKDIR /usr/app/AlgoDev
