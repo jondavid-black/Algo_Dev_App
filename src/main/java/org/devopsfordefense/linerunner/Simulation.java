@@ -76,16 +76,19 @@ public class Simulation {
             final double t = data.getKey();
             final double a = data.getValue();
 
-            System.out.println("Running Simulation Step: t=" + t + " a=" + a);
             runner.step(t, a);
 
             log.println(
                     "Step result: " + runner.getTimeSec() + ", " + runner.getPosition() + ", " + runner.getVelocity());
-            try {
-            Thread.sleep(1000);
-            } catch (Exception exception) {
-            // ignore
+            
+            // create some high CPU utilization to test load monitoring
+            double val = 0.0;
+            for (int r=1; r<150000000; r++) {
+                double circumfrence = 2 * Math.PI * r;
+                double area = Math.PI * r * r;
+                val += area/circumfrence;
             }
+            System.out.println("Completed Simulation Step: t=" + t + " a=" + a + " cpu_pusher=" + val);
 
         }
 
