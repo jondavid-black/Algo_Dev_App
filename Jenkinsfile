@@ -49,11 +49,15 @@ pipeline {
         stage('Run Scenarios on Kubernetes Cluster') {
             parallel {
                 stage('Run Scenario 1') {
-                    sh 'kubectl apply -f ./src/kube/scenario1.yml'
+                    steps {
+                        sh 'kubectl apply -f ./src/kube/scenario1.yml'
+                    }
                 }
 
                 stage('Run Scenario 2') {
-                    sh 'kubectl apply -f ./src/kube/scenario2.yml'
+                    steps {
+                        sh 'kubectl apply -f ./src/kube/scenario2.yml'
+                    }
                 }
             }
         }
