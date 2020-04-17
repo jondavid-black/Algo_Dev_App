@@ -65,7 +65,8 @@ pipeline {
         stage('Wait for runs to complete') {
             steps {
                 // TODO there's got to be a better way to do this
-                sh 'sleep 120'
+                sh 'while kubectl describe -f ./src/kube/scenario1.yml | grep -q "1 Running"; do sleep 2; done'
+                sh 'while kubectl describe -f ./src/kube/scenario2.yml | grep -q "1 Running"; do sleep 2; done'
             }
         }
 
